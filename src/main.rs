@@ -1,5 +1,8 @@
 use structopt::StructOpt;
 
+#[derive(Debug)]
+struct ConversionError(String);
+
 #[derive(StructOpt)]
 struct ConversionCLI {
     #[structopt(parse(from_os_str))]
@@ -8,19 +11,27 @@ struct ConversionCLI {
     outfile: std::path::PathBuf,
 }
 
-fn main() {
+fn main() -> Result<(), ConversionError> {
     //TODO better place for the help txt
     println!("CSV converter, from Bremische Volksbank format to YNAB import format");
     let args = ConversionCLI::from_args();
+    let infilename = args.infile.as_path().display().to_string();
     println!("infile: {:?}", args.infile);
     println!("outfile: {:?}", args.outfile);
     
-    //TODO better error handling, consider BufReader
-    let content = std::fs::read_to_string(&args.infile).expect("could not read file");
+    //TODO Consider BufReader, though month or two of personal finance fits into memory fine
+    let result = std::fs::read_to_string(&args.infile);
     
-    //TODO extend to do actual conversion
-    //TODO handle or convert ISO-8859-15
+    let content = match result {
+        Ok(content) => { content },
+        // TODO make even prettier
+        Err(err) => { return Err(ConversionError(format!("Error reading {}: {}",
+                                                         infilename, err))); }
+    };
+
+    //TODO handle or convert ISO-8859-15, instead of leaving it to the user
     for line in content.lines() {
         println!("{}", line);
     }
+    Ok(())
 }
