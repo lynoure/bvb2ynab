@@ -16,7 +16,6 @@ fn main() -> Result<(), ConversionError> {
     println!("CSV converter, from Bremische Volksbank format to YNAB import format");
     let args = ConversionCLI::from_args();
     let infilename = args.infile.as_path().display().to_string();
-    println!("infile: {:?}", args.infile);
     println!("outfile: {:?}", args.outfile);
     
     //TODO Consider BufReader, though month or two of personal finance fits into memory fine
