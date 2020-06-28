@@ -10,7 +10,11 @@ struct ConversionCLI {
 }
 
 fn format(content: String) {
-    for line in content.lines() {
+    //TODO Error if there this is not found, as it means not BVB bank statement CSV
+    // Could also just skip the first 13 lines, but that would be fragile
+    let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
+    let transactions = content.get(beginning..).unwrap();
+    for line in transactions.lines().skip(1) {
         println!("{}", line);
     }
 }
