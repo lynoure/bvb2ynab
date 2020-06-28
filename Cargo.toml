@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 structopt = "0.3.13"
+failure = "0.1.7"
+exitfailure = "0.5.1"

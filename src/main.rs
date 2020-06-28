@@ -1,7 +1,7 @@
 use structopt::StructOpt;
+use failure::ResultExt;
+use exitfailure::ExitFailure;
 
-#[derive(Debug)]
-struct ConversionError(String);
 
 #[derive(StructOpt)]
 struct ConversionCLI {
@@ -15,21 +15,15 @@ fn format(content: String) {
     }
 }
 
-fn main() -> Result<(), ConversionError> {
+fn main() -> Result<(), ExitFailure> {
     //TODO Help txt with 'cli'
     let args = ConversionCLI::from_args();
-    let infilename = args.infile.to_string_lossy();
-    
-    //TODO Consider BufReader, though month or two of personal finance fits into memory fine
-    let result = std::fs::read_to_string(&args.infile);
-    
-    let content = match result {
-        Ok(content) => { content },
-        // TODO make even prettier & return unique error codes
-        Err(err) => { return Err(ConversionError(format!("Error reading {}: {}",
-                                                         infilename, err))); }
-    };
+    let infilename = args.infile.as_path().display().to_string();
 
+    //TODO Consider BufReader, though month or two of personal finance fits into memory fine
+    let content = std::fs::read_to_string(&args.infile)
+        .with_context(|_| format!("Could not read file '{}'", infilename))?;
+    
     //TODO handle or convert ISO-8859-15, instead of leaving it to the user
     
     format(content);
