@@ -15,8 +15,15 @@ struct ConversionCLI {
 // YNAB docs say date format would be "6/8/20" but my account shows "2020-06-08",
 // YNAB support says it autodetects and asks if unclear
 // Leaving the date unconverted for now until hitting a hickup
-fn convert_date(input: String) -> String {
-    input.trim_matches('\"').to_string()
+fn convert_date(input: &str) -> &str {
+    input.trim_matches('\"')
+}
+
+fn convert_payee(input: &str) -> &str {
+    //TODO Take from upper case to lower with initial
+    //TODO prune the usual suspects of their chattiness
+    //TODO Maybe in case of PayPal, get the final payee from the message
+    input.trim_matches('\"')
 }
     
 
@@ -36,10 +43,14 @@ fn format(content: String) {
             if complete.contains(";;;;;;;;;") {
                 break;
             };
-            // TODO process the complete line to YNAB format
-            // TODO replace date with the processed one
-            println!("{}", complete);
-            complete = "".to_string();
+            println!("{}", complete); // XXX Remove when no longer debugging
+            
+            // TODO parse the line into YNAB format
+            // TODO the throwing away of quotes could fit here?
+            let parts: Vec<&str> = complete.split(";").collect();
+            println!("{},{},", convert_date(parts[0]), convert_payee(parts[3]));
+
+            complete = "".to_string(); 
         }
     }
 }
@@ -65,8 +76,17 @@ fn main() -> Result<(), ExitFailure> {
 
 #[test]
 fn test_convert_date() {
-    assert_eq!("28.6.2020".to_string(), convert_date("\"28.6.2020\"".to_string()));
-    assert_eq!("8.6.2020".to_string(), convert_date("\"8.6.2020\"".to_string()));
+    assert_eq!("28.6.2020", convert_date("\"28.6.2020\""));
+    assert_eq!("8.6.2020", convert_date("\"8.6.2020\""));
+}
+
+#[test]
+fn test_convert_payee() {
+    assert_eq!("Tolle Laden GmbH", convert_payee("\"Tolle Laden GmbH\""));
+    // TODO prettier use of case
+    // assert_eq!("Tolle Laden GmbH", convert_payee("\"TOLLE LADEN GMBH\""));
+    // TODO for pruning the chattiness from the most usual suspects
+    // assert_eq("Lidl", convert_payee("\"DANKE, IHR LIDL\""));
 }
 
 /*              
