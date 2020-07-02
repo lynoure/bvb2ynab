@@ -34,7 +34,8 @@ fn format(content: String) {
     let transactions = content.get(beginning..).unwrap();
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
-        complete = complete + line;
+        // Memo is split to multiple lines, " " needed to avoid joining words
+        complete = complete + " " + line;
         // "S" or "H" is the last field on a complete transaction
         if complete.rfind("\"S\"") == None && complete.rfind("\"H\"") == None {
             continue;
