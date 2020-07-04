@@ -19,11 +19,12 @@ fn convert_date(input: &str) -> &str {
     input.trim_matches('\"')
 }
 
-fn convert_payee(input: &str) -> &str {
+fn convert_payee(input: Vec<&str>) -> &str {
     //TODO Take from upper case to lower with initial
+    //TODO Get rid of all commas!
     //TODO prune the usual suspects of their chattiness
     //TODO Maybe in case of PayPal, get the final payee from the message
-    input.trim_matches('\"')
+    input[3].trim_matches('\"')
 }
     
 
@@ -49,7 +50,7 @@ fn format(content: String) {
             // TODO parse the line into YNAB format
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},", convert_date(parts[0]), convert_payee(parts[3]));
+            println!("{},{},", convert_date(parts[0]), convert_payee(parts));
 
             complete = "".to_string(); 
         }
@@ -83,7 +84,11 @@ fn test_convert_date() {
 
 #[test]
 fn test_convert_payee() {
-    assert_eq!("Tolle Laden GmbH", convert_payee("\"Tolle Laden GmbH\""));
+    let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"", 
+        "\"ISSUER\"", 
+        "\"Tolle Laden GmbH\""];
+    assert_eq!("Tolle Laden GmbH", convert_payee(input));
     // TODO prettier use of case
     // assert_eq!("Tolle Laden GmbH", convert_payee("\"TOLLE LADEN GMBH\""));
     // TODO for pruning the chattiness from the most usual suspects
