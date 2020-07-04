@@ -11,23 +11,23 @@ struct ConversionCLI {
     infile: std::path::PathBuf,
 }
 
-
-// YNAB docs say date format would be "6/8/20" but my account shows "2020-06-08",
-// YNAB support says it autodetects and asks if unclear
-// Leaving the date unconverted for now until hitting a hickup
+/// Converts the transaction date into a format that YNAB understands
+/// by pruning away the quotes
+/// YNAB support says it autodetects the format and asks if unclear
 fn convert_date(input: &str) -> &str {
     input.trim_matches('\"')
 }
 
-fn convert_payee(input: Vec<&str>) -> &str {
-    //TODO Take from upper case to lower with initial
-    //TODO Get rid of all commas!
-    //TODO prune the usual suspects of their chattiness
+/// Converts the payee in a very naive way by pruning the quotation marks
+/// and commas
+fn convert_payee(input: Vec<&str>) -> String {
+    //TODO Maybe take from upper case to lower with initial
+    //TODO Maybe prune the usual suspects of their chattiness
     //TODO Maybe in case of PayPal, get the final payee from the message
-    input[3].trim_matches('\"')
+    input[3].trim_matches('\"').replace(',', "").to_string()
 }
     
-
+/// Formats the multiline String into YNAB format
 fn format(content: String) {
     //TODO Error if these are is not found, as it means not BVB bank statement CSV
     // Could also just skip the first 13 lines, but that would be fragile
@@ -36,7 +36,11 @@ fn format(content: String) {
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
         // Memo is split to multiple lines, " " needed to avoid joining words
+        if complete == "" {
+            complete = line.to_string();
+        } else {
         complete = complete + " " + line;
+        }
         // "S" or "H" is the last field on a complete transaction
         if complete.rfind("\"S\"") == None && complete.rfind("\"H\"") == None {
             continue;
@@ -46,7 +50,6 @@ fn format(content: String) {
                 break;
             };
             println!("{}", complete); // XXX Remove when no longer debugging
-            
             // TODO parse the line into YNAB format
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
@@ -83,17 +86,29 @@ fn test_convert_date() {
 }
 
 #[test]
-fn test_convert_payee() {
+fn test_convert_payee_simple_input() {
     let input = vec!["\"28.6.2020\"",
         "\"28.6.2020\"", 
         "\"ISSUER\"", 
         "\"Tolle Laden GmbH\""];
     assert_eq!("Tolle Laden GmbH", convert_payee(input));
-    // TODO prettier use of case
+}
+
+#[test]
+fn test_convert_payee_removes_commas() {
+    let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "\"ISSUER\"",
+        "\"DANKE, IHR SUPERMARKT\""];
+    // Will joyfully break if the chatty formats ever get cleaned real good
+    assert_eq!("DANKE IHR SUPERMARKT", convert_payee(input));
+
+    // TODO prettified use of case
     // assert_eq!("Tolle Laden GmbH", convert_payee("\"TOLLE LADEN GMBH\""));
     // TODO for pruning the chattiness from the most usual suspects
     // assert_eq("Lidl", convert_payee("\"DANKE, IHR LIDL\""));
 }
+
 
 /*              
     let _example = "\"08.06.2020\";\"08.06.2020\";\"Mila Mustermann\";\"Tolle Laden GmbH\";;\"DE89370400440532013000\";;\"GENODEF1HB1\";\"Basislastschrift
