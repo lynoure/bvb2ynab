@@ -20,18 +20,28 @@ fn convert_date(input: &str) -> &str {
 
 /// Converts the payee in a very naive way by pruning the quotation marks
 /// and commas
-fn convert_payee(input: Vec<&str>) -> String {
+fn convert_payee(input: &Vec<&str>) -> String {
     //TODO Maybe take from upper case to lower with initial
     //TODO Maybe prune the usual suspects of their chattiness
     //TODO Maybe in case of PayPal, get the final payee from the message
     input[3].trim_matches('\"').replace(',', "").to_string()
 }
-    
+
+fn convert_amount(input: Vec<&str>) -> String {
+    let mut sign = "";
+    if input[12] == "\"S\"" {
+        sign = "-";
+    }
+    let mut amount = input[11].trim_matches('\"').split(",");
+    format!("{}{}.{}", sign, amount.next().unwrap(), amount.next().unwrap())
+}
+
 /// Formats the multiline String into YNAB format
 fn format(content: String) {
     //TODO Error if these are is not found, as it means not BVB bank statement CSV
     // Could also just skip the first 13 lines, but that would be fragile
     let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
+    println!("Date,Payee,Memo,Amount");
     let transactions = content.get(beginning..).unwrap();
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
@@ -49,11 +59,13 @@ fn format(content: String) {
             if complete.contains(";;;;;;;;;") {
                 break;
             };
-            println!("{}", complete); // XXX Remove when no longer debugging
-            // TODO parse the line into YNAB format
+            // println!("{}", complete); // XXX Remove when no longer debugging
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},", convert_date(parts[0]), convert_payee(parts));
+            println!("{},{},,{}", convert_date(parts[0]),
+                     convert_payee(&parts),
+                     // memo
+                     convert_amount(parts));
 
             complete = "".to_string(); 
         }
@@ -91,7 +103,7 @@ fn test_convert_payee_simple_input() {
         "\"28.6.2020\"", 
         "\"ISSUER\"", 
         "\"Tolle Laden GmbH\""];
-    assert_eq!("Tolle Laden GmbH", convert_payee(input));
+    assert_eq!("Tolle Laden GmbH", convert_payee(&input));
 }
 
 #[test]
@@ -101,7 +113,7 @@ fn test_convert_payee_removes_commas() {
         "\"ISSUER\"",
         "\"DANKE, IHR SUPERMARKT\""];
     // Will joyfully break if the chatty formats ever get cleaned real good
-    assert_eq!("DANKE IHR SUPERMARKT", convert_payee(input));
+    assert_eq!("DANKE IHR SUPERMARKT", convert_payee(&input));
 
     // TODO prettified use of case
     // assert_eq!("Tolle Laden GmbH", convert_payee("\"TOLLE LADEN GMBH\""));
@@ -109,6 +121,23 @@ fn test_convert_payee_removes_commas() {
     // assert_eq("Lidl", convert_payee("\"DANKE, IHR LIDL\""));
 }
 
+#[test]
+fn test_convert_amount_outgoing() {
+    let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "\"ISSUER\"",
+        "\"SUPERMARKT\"",
+        "",
+        "\"IBAN\"",
+        "",
+        "\"BIC\"",
+        "\"MEMO\"",
+        "",
+        "\"EUR\"",
+        "\"11,97\"",
+        "\"S\""];
+    assert_eq!("-11.97", convert_amount(input));
+}
 
 /*              
     let _example = "\"08.06.2020\";\"08.06.2020\";\"Mila Mustermann\";\"Tolle Laden GmbH\";;\"DE89370400440532013000\";;\"GENODEF1HB1\";\"Basislastschrift
