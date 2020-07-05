@@ -11,10 +11,15 @@ struct ConversionCLI {
     infile: std::path::PathBuf,
 }
 
+//TODO Struct for transaction?
+
 /// Converts the transaction date into a format that YNAB understands
 /// by pruning away the quotes
 /// YNAB support says it autodetects the format and asks if unclear
 fn convert_date(input: &str) -> &str {
+    //FIXME THIS WILL NEED TO CHANGE TO LOOK INTO THE MEMO AS WELL
+    // Take the whole of parts and look for something matching the date
+    // format in the memo first
     input.trim_matches('\"')
 }
 
@@ -25,6 +30,11 @@ fn convert_payee(input: &Vec<&str>) -> String {
     //TODO Maybe prune the usual suspects of their chattiness
     //TODO Maybe in case of PayPal, get the final payee from the message
     input[3].trim_matches('\"').replace(',', "").to_string()
+}
+
+fn convert_memo(input: &Vec<&str>) -> String {
+    input[8].trim_matches('\"').replace(',', "").to_string()
+    //NOTE The bank will put the actual transaction data here in case of card payments!!!
 }
 
 fn convert_amount(input: Vec<&str>) -> String {
@@ -62,9 +72,9 @@ fn format(content: String) {
             // println!("{}", complete); // XXX Remove when no longer debugging
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},,{}", convert_date(parts[0]),
+            println!("{},{},{},{}", convert_date(parts[0]),
                      convert_payee(&parts),
-                     // memo
+                     convert_memo(&parts),
                      convert_amount(parts));
 
             complete = "".to_string(); 
@@ -120,6 +130,21 @@ fn test_convert_payee_removes_commas() {
     // TODO for pruning the chattiness from the most usual suspects
     // assert_eq("Lidl", convert_payee("\"DANKE, IHR LIDL\""));
 }
+
+#[test]
+fn test_convert_memo() {
+    let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "\"ISSUER\"",
+        "\"SUPERMARKT\"",
+        "",
+        "\"IBAN\"",
+        "",
+        "\"BIC\"",
+        "\"MEMO\""];
+    assert_eq!("MEMO", convert_memo(&input));
+}
+
 
 #[test]
 fn test_convert_amount_outgoing() {
