@@ -12,13 +12,14 @@ struct ConversionCLI {
 }
 
 //TODO Struct for transaction?
+//TODO Cleaning of the fields not to repeat
 
 /// Converts the transaction date into a format that YNAB understands
 /// by pruning away the quotes
 /// YNAB support says it autodetects the format and asks if unclear
 fn convert_date(input: &str) -> &str {
     //FIXME THIS WILL NEED TO CHANGE TO LOOK INTO THE MEMO AS WELL
-    // Take the whole of parts and look for something matching the date
+    // Take the whole of parts and look for something matching the date 
     // format in the memo first
     input.trim_matches('\"')
 }
@@ -72,7 +73,7 @@ fn format(content: String) {
             // println!("{}", complete); // XXX Remove when no longer debugging
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},{},{}", convert_date(parts[0]),
+            println!("{},{},{},{}", convert_date(parts[0]), 
                      convert_payee(&parts),
                      convert_memo(&parts),
                      convert_amount(parts));
