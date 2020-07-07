@@ -3,6 +3,7 @@
 use structopt::StructOpt;
 use failure::ResultExt;
 use exitfailure::ExitFailure;
+use regex::Regex;
 
 
 #[derive(StructOpt)]
@@ -19,8 +20,12 @@ struct ConversionCLI {
 /// that date is preferred over Buchungstag and Valuta.
 /// YNAB support says it autodetects the format and asks if unclear.
 fn convert_date(input: &Vec<&str>) -> String {
-    // input[8] is the memo
-    input[0].trim_matches('\"').to_string()
+    let date_re = Regex::new(r"\d{2}\.\d{2}\.\d{4}").unwrap();
+    let mat = date_re.find(input[8]);
+    match mat {
+        Some(mat) => input[8].get(mat.start()..mat.end()).unwrap().to_string(),
+        None => input[0].trim_matches('\"').to_string()
+    }
 }
 
 /// Converts the payee in a very naive way by pruning the quotation marks
@@ -34,7 +39,6 @@ fn convert_payee(input: &Vec<&str>) -> String {
 
 fn convert_memo(input: &Vec<&str>) -> String {
     input[8].trim_matches('\"').replace(',', "").to_string()
-    //NOTE The bank will put the actual transaction data here in case of card payments!!!
 }
 
 fn convert_amount(input: Vec<&str>) -> String {
@@ -92,20 +96,16 @@ fn main() -> Result<(), ExitFailure> {
     let content = std::fs::read_to_string(&args.infile)
         .with_context(|_| format!("Could not read file '{}'", infilename))?;
     
-    //TODO MAYBE handle or convert ISO-8859-15, instead of leaving it to the user
-    
-    // TODO use this example data in a test
-    
-    
     format(content);
 
     Ok(())
 }
 
+
 #[test]
 fn test_convert_date_no_memo() {
-    let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
+    let input = vec!["\"28.06.2020\"",
+        "\"28.06.2020\"",
         "",
         "",
         "",
@@ -113,8 +113,23 @@ fn test_convert_date_no_memo() {
         "",
         "",
         ""]; // memo field
-    assert_eq!("28.6.2020", convert_date(&input));
+    assert_eq!("28.06.2020", convert_date(&input));
 }
+
+#[test]
+fn test_convert_date_from_memo() {
+    let input = vec!["\"28.06.2020\"",
+        "\"28.06.2020\"",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "\"26.06.2020"];
+    assert_eq!("26.06.2020", convert_date(&input));
+}
+
 
 #[test]
 fn test_convert_payee_simple_input() {
