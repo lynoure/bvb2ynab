@@ -14,14 +14,13 @@ struct ConversionCLI {
 //TODO Struct for transaction?
 //TODO Cleaning of the fields not to repeat
 
-/// Converts the transaction date into a format that YNAB understands
-/// by pruning away the quotes
-/// YNAB support says it autodetects the format and asks if unclear
-fn convert_date(input: &str) -> &str {
-    //FIXME THIS WILL NEED TO CHANGE TO LOOK INTO THE MEMO AS WELL
-    // Take the whole of parts and look for something matching the date 
-    // format in the memo first
-    input.trim_matches('\"')
+/// Converts the transaction date into a format that YNAB understands.
+/// As for card payments the actual date is often in the Vorgang/Verwendungszweck,
+/// that date is preferred over Buchungstag and Valuta.
+/// YNAB support says it autodetects the format and asks if unclear.
+fn convert_date(input: &Vec<&str>) -> String {
+    // input[8] is the memo
+    input[0].trim_matches('\"').to_string()
 }
 
 /// Converts the payee in a very naive way by pruning the quotation marks
@@ -70,10 +69,11 @@ fn format(content: String) {
             if complete.contains(";;;;;;;;;") {
                 break;
             };
-            // println!("{}", complete); // XXX Remove when no longer debugging
+            // complete is now actually complete!
+
             // TODO the throwing away of quotes could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},{},{}", convert_date(parts[0]), 
+            println!("{},{},{},{}", convert_date(&parts), 
                      convert_payee(&parts),
                      convert_memo(&parts),
                      convert_amount(parts));
@@ -103,9 +103,17 @@ fn main() -> Result<(), ExitFailure> {
 }
 
 #[test]
-fn test_convert_date() {
-    assert_eq!("28.6.2020", convert_date("\"28.6.2020\""));
-    assert_eq!("8.6.2020", convert_date("\"8.6.2020\""));
+fn test_convert_date_no_memo() {
+    let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""]; // memo field
+    assert_eq!("28.6.2020", convert_date(&input));
 }
 
 #[test]
