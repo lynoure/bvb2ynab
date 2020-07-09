@@ -33,8 +33,23 @@ fn convert_date(input: &Vec<&str>) -> String {
 fn convert_payee(input: &Vec<&str>) -> String {
     //TODO Maybe take from upper case to lower with initial
     //TODO Maybe prune the usual suspects of their chattiness
-    //TODO Maybe in case of PayPal, get the final payee from the message
-    input[3].trim_matches('\"').replace(',', "").to_string()
+    let payee: String = input[3].trim_matches('\"').replace(',', "");
+    if payee.contains("PayPal") {
+        let memo = input[8];
+        let begin = memo.find("bei ");
+        match begin {
+            Some(mut begin) => {
+                begin = begin + 4;
+                let end = memo[begin..].find(' ').unwrap() + begin;
+                println!("DEBUG begin {}, end {} ", begin, end);
+                memo[begin..end].to_string()
+            },
+            // In case of receiving a payment from PayPal, or weird memo field
+            None => payee
+        }
+    } else {
+        payee
+    }
 }
 
 fn convert_memo(input: &Vec<&str>) -> String {
@@ -53,7 +68,6 @@ fn convert_amount(input: Vec<&str>) -> String {
 /// Formats the multiline String into YNAB format
 fn format(content: String) {
     //TODO Error if these are is not found, as it means not BVB bank statement CSV
-    // Could also just skip the first 13 lines, but that would be fragile
     let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
     println!("Date,Payee,Memo,Amount");
     let transactions = content.get(beginning..).unwrap();
@@ -75,7 +89,7 @@ fn format(content: String) {
             };
             // complete is now actually complete!
 
-            // TODO the throwing away of quotes could fit here?
+            // TODO the throwing away of quotes and commas could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
             println!("{},{},{},{}", convert_date(&parts), 
                      convert_payee(&parts),
@@ -156,6 +170,20 @@ fn test_convert_payee_removes_commas() {
 }
 
 #[test]
+fn test_convert_payee_paypal_payee() {
+        let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "\"ISSUER\"",
+        "\"PayPal (Europe)\"",
+        "",
+        "\"IBAN\"",
+        "",
+        "\"BIC\"",
+        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF\""];
+    assert_eq!("EBAY", convert_payee(&input));
+}
+
+#[test]
 fn test_convert_memo() {
     let input = vec!["\"28.6.2020\"",
         "\"28.6.2020\"",
@@ -188,7 +216,7 @@ fn test_convert_amount_outgoing() {
     assert_eq!("-11.97", convert_amount(input));
 }
 
-/*              
+/* EXAMPLE LINE
     let _example = "\"08.06.2020\";\"08.06.2020\";\"Mila Mustermann\";\"Tolle Laden GmbH\";;\"DE89370400440532013000\";;\"GENODEF1HB1\";\"Basislastschrift
 PP.1234.PP . EXAMPLIFIED, I
 hr Einkauf bei EXAMPLIFIED 
