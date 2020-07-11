@@ -33,16 +33,24 @@ fn convert_date(input: &Vec<&str>) -> String {
 fn convert_payee(input: &Vec<&str>) -> String {
     //TODO Maybe take from upper case to lower with initial
     //TODO Maybe prune the usual suspects of their chattiness
+    //TODO "" is Bremische Volksbank for their fees
+    //TODO "Verrechnungskunde intern" should have e.g. VISA in the memo,
+    //and be for paying the card payments
     let payee: String = input[3].trim_matches('\"').replace(',', "");
     if payee.contains("PayPal") {
-        let memo = input[8];
+        // I kid you not, one of the recipient names has been a comma!
+        let memo = input[8].replace(',', "");
         let begin = memo.find("bei ");
         match begin {
-            Some(mut begin) => {
+            Some(mut begin) => { 
                 begin = begin + 4;
                 let end = memo[begin..].find(' ').unwrap() + begin;
-                println!("DEBUG begin {}, end {} ", begin, end);
-                memo[begin..end].to_string()
+                let recipient = memo[begin..end].to_string();
+                if recipient.is_empty() {
+                    "Unknown via PayPal".to_string()
+                } else {
+                    recipient
+                }
             },
             // In case of receiving a payment from PayPal, or weird memo field
             None => payee
@@ -182,6 +190,21 @@ fn test_convert_payee_paypal_payee() {
         "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF\""];
     assert_eq!("EBAY", convert_payee(&input));
 }
+
+#[test]
+fn test_convert_payee_paypal_unknown_recipient() {
+        let input = vec!["\"28.6.2020\"",
+        "\"28.6.2020\"",
+        "\"ISSUER\"",
+        "\"PayPal (Europe)\"",
+        "",
+        "\"IBAN\"",
+        "",
+        "\"BIC\"",
+        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei , EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF\""];
+    assert_eq!("Unknown via PayPal", convert_payee(&input));
+}
+
 
 #[test]
 fn test_convert_memo() {
