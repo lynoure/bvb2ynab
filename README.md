@@ -5,8 +5,7 @@ statements into a form supported by YNAB import.
 
 ## Project status
 
-Bvb2ynab is still in development, and not recommended for use yet. If you look
-at the TODOs and especially at the FIXME, you will understand why.
+Bvb2ynab is still in development, but it should be pretty harmless to try.
 
 ## Installation instructions
 Don't ask me yet, I've been running this with cargo so far, as I'm new to Rust :)
@@ -23,6 +22,9 @@ $ iconv -f iso-8859-15 -t utf-8 -o ~/out.csv ~/original.csv
 $ bvb2ynab ~/out.csv >> final.csv 
 
 ```
+
+Upon importing to YNAB, the recommendation is to uncheck importing the memos, unless 
+you want a lot of bank details there.
 
 ## Contributing
 It's probably too early for anyone to do that, but pull requests are welcome. 
