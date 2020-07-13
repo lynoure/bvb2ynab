@@ -28,21 +28,15 @@ fn convert_date(input: &Vec<&str>) -> String {
     }
 }
 
-/// Converts the payee in a very naive way by pruning the quotation marks
-/// and commas
-fn convert_payee(input: &Vec<&str>) -> String {
-    //TODO Maybe take from upper case to lower with initial
-    //TODO Maybe prune the usual suspects of their chattiness
-    //TODO "" is Bremische Volksbank for their fees
-    //TODO "Verrechnungskunde intern" should have e.g. VISA in the memo,
-    //and be for paying the card payments
-    let payee: String = input[3].trim_matches('\"').replace(',', "");
-    if payee.contains("PayPal") {
-        // I kid you not, one of the recipient names has been a comma!
-        let memo = input[8].replace(',', "");
+/// Gets the actual payee paid via PayPal
+/// In case of the name being empty, returns "Unknown via PayPal"
+/// In case of receiving payment from PayPal, or the memo being totally different for some
+/// other reason, return merely "PayPal"
+fn get_paypal_payee(memo: String) -> String {
+    // TODO Deal with multi-word paypal payees?
         let begin = memo.find("bei ");
         match begin {
-            Some(mut begin) => { 
+            Some(mut begin) => {
                 begin = begin + 4;
                 let end = memo[begin..].find(' ').unwrap() + begin;
                 let recipient = memo[begin..end].to_string();
@@ -53,8 +47,21 @@ fn convert_payee(input: &Vec<&str>) -> String {
                 }
             },
             // In case of receiving a payment from PayPal, or weird memo field
-            None => payee
+            None => "PayPal".to_string()
         }
+}
+
+/// Converts the payee in a naive way with the exception of PayPal, where actual payee is looked
+/// for
+fn convert_payee(input: &Vec<&str>) -> String {
+    //TODO Maybe take from upper case to lower with initial
+    //TODO Maybe prune the usual suspects of their chattiness
+    //TODO "" is Bremische Volksbank for their fees
+    //TODO "Verrechnungskunde intern" should have e.g. VISA in the memo,
+    //and be for paying the card payments
+    let payee: String = input[3].trim_matches('\"').replace(',', "");
+    if payee.contains("PayPal") {
+        get_paypal_payee(input[8].replace(',', ""))
     } else {
         payee
     }
@@ -179,6 +186,13 @@ fn test_convert_payee_removes_commas() {
 }
 
 #[test]
+fn test_get_paypal_payee() {
+    assert_eq!("EBAY", get_paypal_payee("Basislastschrift . EBAY EBAY.C Ihr Einkauf bei \
+    EBAY EBAY.C EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 \
+    000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF".to_string()))
+}
+
+#[test]
 fn test_convert_payee_paypal_payee() {
         let input = vec!["\"28.6.2020\"",
         "\"28.6.2020\"",
@@ -188,7 +202,9 @@ fn test_convert_payee_paypal_payee() {
         "\"IBAN\"",
         "",
         "\"BIC\"",
-        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF\""];
+        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  \
+        PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 \
+        00700100175526303 BIC: DEUT DEFF\""];
     assert_eq!("EBAY", convert_payee(&input));
 }
 
@@ -202,7 +218,9 @@ fn test_convert_payee_paypal_unknown_recipient() {
         "\"IBAN\"",
         "",
         "\"BIC\"",
-        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei , EREF: 10074 93828595  PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 BIC: DEUT DEFF\""];
+        "\"Basislastschrift . , Ihr Einkauf bei , EREF: 10074 93828595  PAYPAL MREF: 5VRJ \
+        224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 \
+        BIC: DEUT DEFF\""];
     assert_eq!("Unknown via PayPal", convert_payee(&input));
 }
 
