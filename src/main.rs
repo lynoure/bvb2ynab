@@ -82,13 +82,14 @@ fn format(content: String) {
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
         // Memo is split to multiple lines, " " needed to avoid joining words
-        if complete == "" {
+        // even though sometimes that means an extra space
+        if complete.is_empty() {
             complete = line.to_string();
         } else {
         complete = complete + " " + line;
         }
         // "S" or "H" is the last field on a complete transaction
-        if complete.rfind("\"S\"") == None && complete.rfind("\"H\"") == None {
+        if !(complete.ends_with("\"S\"")) && !(complete.ends_with("\"H\"")) {
             continue;
         } else {
             // Balance lines have very little details and are easy to spot
@@ -112,11 +113,11 @@ fn format(content: String) {
 fn main() -> Result<(), ExitFailure> {
     //TODO Help txt with 'cli'
     let args = ConversionCLI::from_args();
-    let infilename = args.infile.as_path().display().to_string();
+    let filename = args.infile.as_path().display().to_string();
 
     //TODO Could use BufReader, though month or two of personal finance fits into memory fine
     let content = std::fs::read_to_string(&args.infile)
-        .with_context(|_| format!("Could not read file '{}'", infilename))?;
+        .with_context(|_| format!("Could not read file '{}'", filename))?;
     
     format(content);
 
