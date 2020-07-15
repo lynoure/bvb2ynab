@@ -3,6 +3,7 @@
 use structopt::StructOpt;
 use failure::ResultExt;
 use exitfailure::ExitFailure;
+use std::io::{self, Write};
 use regex::Regex;
 
 
@@ -80,12 +81,15 @@ fn convert_amount(input: Vec<&str>) -> String {
     format!("{}{}.{}", sign, amount.next().unwrap(), amount.next().unwrap())
 }
 
-/// Formats the multiline String into YNAB format
+/// Formats the multiline String into YNAB format and prints it out
+// TODO Add tests with minimal content
 fn format(content: String) {
-    //TODO Error if these are is not found, as it means not BVB bank statement CSV
+    //TODO Show a proper Error if these are is not found, as it means not BVB bank statement CSV
     let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
     println!("Date,Payee,Memo,Amount");
     let transactions = content.get(beginning..).unwrap();
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
         // Memo is split to multiple lines, " " needed to avoid joining words
@@ -107,11 +111,18 @@ fn format(content: String) {
 
             // TODO the throwing away of quotes and commas could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
-            println!("{},{},{},{}", convert_date(&parts), 
-                     convert_payee(&parts),
-                     convert_memo(&parts),
-                     convert_amount(parts));
-
+            // With half a year of transactions, this doesn't seem to speed anything noticeably
+            let result = writeln!(handle, "{},{},{},{}", convert_date(&parts),
+                                  convert_payee(&parts),
+                                  convert_memo(&parts),
+                                  convert_amount(parts));
+            match result {
+                Ok(_) => { },
+                Err(e) => {
+                    // TODO could use ExitFailure?
+                    panic!("Printing a line failed! {}", e);
+                }
+            }
             complete = "".to_string(); 
         }
     }
