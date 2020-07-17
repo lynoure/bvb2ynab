@@ -35,21 +35,21 @@ fn convert_date(input: &Vec<&str>) -> String {
 /// other reason, return merely "PayPal"
 fn get_paypal_payee(memo: String) -> String {
     // TODO Deal with multi-word paypal payees?
-        let begin = memo.find("bei ");
-        match begin {
-            Some(mut begin) => {
-                begin = begin + 4;
-                let end = memo[begin..].find(' ').unwrap() + begin;
-                let recipient = memo[begin..end].to_string();
-                if recipient.is_empty() {
-                    "Unknown via PayPal".to_string()
-                } else {
-                    recipient
-                }
-            },
-            // In case of receiving a payment from PayPal, or weird memo field
-            None => "PayPal".to_string()
-        }
+    let begin = memo.find("bei ");
+    match begin {
+        Some(mut begin) => {
+            begin = begin + 4;
+            let end = memo[begin..].find(' ').unwrap() + begin;
+            let recipient = memo[begin..end].to_string();
+            if recipient.is_empty() {
+                "Unknown via PayPal".to_string()
+            } else {
+                recipient
+            }
+        },
+        // In case of receiving a payment from PayPal, or weird memo field
+        None => "PayPal".to_string()
+    }
 }
 
 /// Converts the payee in a naive way with the exception of PayPal, where actual payee is looked
