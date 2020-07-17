@@ -269,13 +269,3 @@ fn test_convert_amount_outgoing() {
     assert_eq!("-11.97", convert_amount(input));
 }
 
-/* EXAMPLE LINE
-    let _example = "\"08.06.2020\";\"08.06.2020\";\"Mila Mustermann\";\"Tolle Laden GmbH\";;\"DE89370400440532013000\";;\"GENODEF1HB1\";\"Basislastschrift
-PP.1234.PP . EXAMPLIFIED, I
-hr Einkauf bei EXAMPLIFIED 
-EREF: 1009202807490 PP.1234
-.PP PAYPAL MREF: ABCD123LMN
-DVG CRED: EXAMPLE0000000000
-000000012 IBAN: DE123456789
-98765432103 BIC: DEUTDEFF\";;\"EUR\";\"113,82\";\"S\"";
-*/

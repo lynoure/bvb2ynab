@@ -27,8 +27,9 @@ Upon importing to YNAB, the recommendation is to uncheck importing the memos, un
 you want a lot of bank details there.
 
 ## Contributing
-It's probably too early for anyone to do that, but pull requests are welcome. 
-Please keep the tests up to date though.
+Bug reports, feature requests and pull requests are welcome. 
+Please keep the tests and example data in example-file-in-utf8.csv up to date when you 
+change or add code!
 
 
 ## License

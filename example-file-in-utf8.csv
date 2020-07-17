@@ -1,0 +1,45 @@
+"Bremische Volksbank eG"
+
+"Umsatzanzeige"
+
+"BLZ:";"29190024";;"Datum:";"24.06.2020"
+"Konto:";"123456700";;"Uhrzeit:";"23:21:46"
+"Abfrage von:";"Mila Mustermann";;"Kontoinhaber:";"Mila Mustermann"
+
+"Zeitraum:";;"von:";"27.05.2020";"bis:";
+"Betrag in EUR:";;"von:";" ";"bis:";" "
+"Sortiert nach:";"Buchungstag";"absteigend"
+
+"Buchungstag";"Valuta";"Auftraggeber/Zahlungsempfänger";"Empfänger/Zahlungspflichtiger";"Konto-Nr.";"IBAN";"BLZ";"BIC";"Vorgang/Verwendungszweck";"Kundenreferenz";"Währung";"Umsatz";" "
+"24.06.2020";"24.06.2020";"ISSUER";"ROSSMANN VIELEN DANK";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
+DIRK ROSSMANN GMBH/BREMEN/D
+E
+23.06.2020 um 14:02:16 Uhr
+65338653/441343/ECTL/
+29190024/123456700/1/1222
+REF 107842/260046";;"EUR";"10,90";"S"
+"24.06.2020";"24.06.2020";"ISSUER";"DAS TEEPARADIES, BREMEN";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
+PAUL SCHRADER GMBH/BREMEN/D
+E
+23.06.2020 um 13:46:40 Uhr
+65124694/44192/CICC/FPIN
+29190024/123456700/1/1222
+REF 050571/260046";;"EUR";"6,95";"S"
+"23.06.2020";"23.06.2020";"Mila Mustermann";"PayPal (Europe) S.a.r.l. etCie., S.C.A.";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
+PP.5058.PP . HUMBLEBUNDL, I
+hr Einkauf bei HUMBLEBUNDL
+EREF: 1009395378020 PP.5058
+.PP PAYPAL MREF: 5VRJ224NEA
+DVG CRED: LU96ZZZ0000000000
+000000058 IBAN: DE885007001
+00175526303 BIC: DEUTDEFF";;"EUR";"28,00";"S"
+"29.05.2020";"31.05.2020";;;;;;;"Abschluss
+
+ABSCHLUSS PER 31.05.2020";;"EUR";"4,65";"S"
+"29.05.2020";"29.05.2020";"Mustermann, Mila";"MeinArbeitsgeber GmbH";;"DE89370400440532013000";;"GENODEF1HB1";"Lohn/Gehalt/Rente
+Lohn / Gehalt 05/2020 EREF:
+000000095/000082 IBAN: DE7
+123456789100 BIC: GE
+NODEM1GLS";;"EUR";"5.156,31";"H"
+"27.05.2020";;;;;;;;;"Anfangssaldo";"EUR";"1.176,91";"H"
+"24.06.2020";;;;;;;;;"Endsaldo";"EUR";"2666,55";"H"
