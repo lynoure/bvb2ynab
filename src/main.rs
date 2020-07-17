@@ -1,4 +1,6 @@
 #![allow(dead_code)]  // Locally that would be without the exclamation
+#[macro_use] extern crate lazy_static;
+
 
 use structopt::StructOpt;
 use failure::ResultExt;
@@ -21,8 +23,10 @@ struct ConversionCLI {
 /// that date is preferred over Buchungstag and Valuta.
 /// YNAB support says it autodetects the format and asks if unclear.
 fn convert_date(input: &Vec<&str>) -> String {
-    let date_re = Regex::new(r"\d{2}\.\d{2}\.\d{4}").unwrap();
-    let mat = date_re.find(input[8]);
+    lazy_static! {
+        static ref RE: Regex =  Regex::new(r"\d{2}\.\d{2}\.\d{4}").unwrap();
+    }
+    let mat = RE.find(input[8]);
     match mat {
         Some(mat) => input[8].get(mat.start()..mat.end()).unwrap().to_string(),
         None => input[0].trim_matches('\"').to_string()
