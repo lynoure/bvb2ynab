@@ -93,7 +93,7 @@ fn format(content: String) {
     println!("Date,Payee,Memo,Amount");
     let transactions = content.get(beginning..).unwrap();
     let stdout = io::stdout();
-    let mut handle = stdout.lock();
+    let mut handle = stdout.lock(); // Should speed up printing out
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
         // Memo is split to multiple lines, " " needed to avoid joining words
@@ -111,7 +111,7 @@ fn format(content: String) {
             if complete.contains(";;;;;;;;;") {
                 break;
             };
-            // complete is now actually complete!
+            // At this point 'complete' in whole and ready for converting
 
             // TODO the throwing away of quotes and commas could fit here?
             let parts: Vec<&str> = complete.split(";").collect();
