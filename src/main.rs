@@ -76,7 +76,7 @@ fn convert_memo(input: &Vec<&str>) -> String {
     input[8].trim_matches('\"').replace(',', "").to_string()
 }
 
-fn convert_amount(input: Vec<&str>) -> String {
+fn convert_amount(input: &Vec<&str>) -> String {
     let mut sign = "";
     if input[12] == "\"S\"" {
         sign = "-";
@@ -119,7 +119,7 @@ fn format(content: String) {
             let result = writeln!(handle, "{},{},{},{}", convert_date(&parts),
                                   convert_payee(&parts),
                                   convert_memo(&parts),
-                                  convert_amount(parts));
+                                  convert_amount(&parts));
             match result {
                 Ok(_) => { },
                 Err(e) => {
@@ -270,6 +270,6 @@ fn test_convert_amount_outgoing() {
         "\"EUR\"",
         "\"11,97\"",
         "\"S\""];
-    assert_eq!("-11.97", convert_amount(input));
+    assert_eq!("-11.97", convert_amount(&input));
 }
 
