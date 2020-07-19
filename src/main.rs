@@ -1,4 +1,4 @@
-#![allow(dead_code)]  // Locally that would be without the exclamation
+#![allow(dead_code)]
 #[macro_use] extern crate lazy_static;
 
 
@@ -16,7 +16,6 @@ struct ConversionCLI {
 }
 
 //TODO Struct for transaction?
-//TODO Cleaning of the fields not to repeat
 
 /// Converts the transaction date into a format that YNAB understands.
 /// As for card payments the actual date is often in the Vorgang/Verwendungszweck,
@@ -26,10 +25,10 @@ fn convert_date(input: &Vec<&str>) -> String {
     lazy_static! {
         static ref RE: Regex =  Regex::new(r"\d{2}\.\d{2}\.\d{4}").unwrap();
     }
-    let mat = RE.find(input[8]);
+    let mat = RE.find(&input[8]);
     match mat {
         Some(mat) => input[8].get(mat.start()..mat.end()).unwrap().to_string(),
-        None => input[0].trim_matches('\"').to_string()
+        None => input[0].to_string()
     }
 }
 
@@ -64,7 +63,7 @@ fn convert_payee(input: &Vec<&str>) -> String {
     //TODO "" is Bremische Volksbank for their fees
     //TODO "Verrechnungskunde intern" should have e.g. VISA in the memo,
     //and be for paying the card payments
-    let payee: String = input[3].trim_matches('\"').replace(',', "");
+    let payee: String = input[3].replace(',', "");
     if payee.contains("PayPal") {
         get_paypal_payee(input[8].replace(',', ""))
     } else {
@@ -73,16 +72,16 @@ fn convert_payee(input: &Vec<&str>) -> String {
 }
 
 fn convert_memo(input: &Vec<&str>) -> String {
-    input[8].trim_matches('\"').replace(',', "").to_string()
+    input[8].replace(',', "").to_string()
 }
 
 fn convert_amount(input: &Vec<&str>) -> String {
     let mut sign = "";
-    if input[12] == "\"S\"" {
+    if input[12] == "S" {
         sign = "-";
     }
-    let mut amount = input[11].trim_matches('\"').split(",");
-    format!("{}{}.{}", sign, amount.next().unwrap(), amount.next().unwrap())
+    let amount = input[11].replace(',', ".");
+    format!("{}{}", sign, amount)
 }
 
 /// Formats the multiline String into YNAB format and prints it out
@@ -90,10 +89,10 @@ fn convert_amount(input: &Vec<&str>) -> String {
 fn format(content: String) {
     //TODO Show a proper Error if these are is not found, as it means not BVB bank statement CSV
     let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
-    println!("Date,Payee,Memo,Amount");
-    let transactions = content.get(beginning..).unwrap();
     let stdout = io::stdout();
     let mut handle = stdout.lock(); // Should speed up printing out
+    let _ = writeln!(handle, "Date,Payee,Memo,Amount"); // Checking all the other writeln cases
+    let transactions = content.get(beginning..).unwrap();
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
         // Memo is split to multiple lines, " " needed to avoid joining words
@@ -113,8 +112,9 @@ fn format(content: String) {
             };
             // At this point 'complete' in whole and ready for converting
 
-            // TODO the throwing away of quotes and commas could fit here?
-            let parts: Vec<&str> = complete.split(";").collect();
+            let parts: Vec<&str> = complete.split(";")
+                .map(|x| x.trim_matches('\"'))
+                .collect();
             // With half a year of transactions, this doesn't seem to speed anything noticeably
             let result = writeln!(handle, "{},{},{},{}", convert_date(&parts),
                                   convert_payee(&parts),
@@ -149,8 +149,8 @@ fn main() -> Result<(), ExitFailure> {
 
 #[test]
 fn test_convert_date_no_memo() {
-    let input = vec!["\"28.06.2020\"",
-        "\"28.06.2020\"",
+    let input = vec!["28.06.2020",
+        "28.06.2020",
         "",
         "",
         "",
@@ -163,34 +163,34 @@ fn test_convert_date_no_memo() {
 
 #[test]
 fn test_convert_date_from_memo() {
-    let input = vec!["\"28.06.2020\"",
-        "\"28.06.2020\"",
+    let input = vec!["28.06.2020",
+        "28.06.2020",
         "",
         "",
         "",
         "",
         "",
         "",
-        "\"26.06.2020"];
+        "26.06.2020"];
     assert_eq!("26.06.2020", convert_date(&input));
 }
 
 
 #[test]
 fn test_convert_payee_simple_input() {
-    let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"", 
-        "\"ISSUER\"", 
-        "\"Tolle Laden GmbH\""];
+    let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "Tolle Laden GmbH"];
     assert_eq!("Tolle Laden GmbH", convert_payee(&input));
 }
 
 #[test]
 fn test_convert_payee_removes_commas() {
-    let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
-        "\"ISSUER\"",
-        "\"DANKE, IHR SUPERMARKT\""];
+    let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "DANKE, IHR SUPERMARKT"];
     // Will joyfully break if the chatty formats ever get cleaned real good
     assert_eq!("DANKE IHR SUPERMARKT", convert_payee(&input));
 
@@ -209,67 +209,67 @@ fn test_get_paypal_payee() {
 
 #[test]
 fn test_convert_payee_paypal_payee() {
-        let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
-        "\"ISSUER\"",
-        "\"PayPal (Europe)\"",
+        let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "PayPal (Europe)",
         "",
-        "\"IBAN\"",
+        "IBAN",
         "",
-        "\"BIC\"",
-        "\"Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  \
+        "BIC",
+        "Basislastschrift . EBAY EBAY.C Ihr Einkauf bei EBAY EBAY.C EREF: 10074 93828595  \
         PAYPAL MREF: 5VRJ 224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 \
-        00700100175526303 BIC: DEUT DEFF\""];
+        00700100175526303 BIC: DEUT DEFF"];
     assert_eq!("EBAY", convert_payee(&input));
 }
 
 #[test]
 fn test_convert_payee_paypal_unknown_recipient() {
-        let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
-        "\"ISSUER\"",
-        "\"PayPal (Europe)\"",
+        let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "PayPal (Europe)",
         "",
-        "\"IBAN\"",
+        "IBAN",
         "",
-        "\"BIC\"",
-        "\"Basislastschrift . , Ihr Einkauf bei , EREF: 10074 93828595  PAYPAL MREF: 5VRJ \
+        "BIC",
+        "Basislastschrift . , Ihr Einkauf bei , EREF: 10074 93828595  PAYPAL MREF: 5VRJ \
         224NEADVG CRED: LU96ZZZ0000 000000000000058 IBAN: DE885 00700100175526303 \
-        BIC: DEUT DEFF\""];
+        BIC: DEUT DEFF"];
     assert_eq!("Unknown via PayPal", convert_payee(&input));
 }
 
 
 #[test]
 fn test_convert_memo() {
-    let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
-        "\"ISSUER\"",
-        "\"SUPERMARKT\"",
+    let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "SUPERMARKT",
         "",
-        "\"IBAN\"",
+        "IBAN",
         "",
-        "\"BIC\"",
-        "\"MEMO\""];
+        "BIC",
+        "MEMO"];
     assert_eq!("MEMO", convert_memo(&input));
 }
 
 
 #[test]
 fn test_convert_amount_outgoing() {
-    let input = vec!["\"28.6.2020\"",
-        "\"28.6.2020\"",
-        "\"ISSUER\"",
-        "\"SUPERMARKT\"",
+    let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "SUPERMARKT",
         "",
-        "\"IBAN\"",
+        "IBAN",
         "",
-        "\"BIC\"",
-        "\"MEMO\"",
+        "BIC",
+        "MEMO",
         "",
-        "\"EUR\"",
-        "\"11,97\"",
-        "\"S\""];
+        "EUR",
+        "11,97",
+        "S"];
     assert_eq!("-11.97", convert_amount(&input));
 }
 
