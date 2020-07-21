@@ -5,7 +5,6 @@
 use structopt::StructOpt;
 use failure::ResultExt;
 use exitfailure::ExitFailure;
-use std::io::{self, Write};
 use regex::Regex;
 
 
@@ -85,13 +84,10 @@ fn convert_amount(input: &Vec<&str>) -> String {
 }
 
 /// Formats the multiline String into YNAB format and prints it out
-// TODO Add tests with minimal content
-fn format(content: String) {
+fn format(content: String, mut writer: impl std::io::Write) {
     //TODO Show a proper Error if these are is not found, as it means not BVB bank statement CSV
     let beginning = content.find("\"Buchungstag\";\"Valuta\"").unwrap();
-    let stdout = io::stdout();
-    let mut handle = stdout.lock(); // Should speed up printing out
-    let _ = writeln!(handle, "Date,Payee,Memo,Amount"); // Checking all the other writeln cases
+    let _ = writeln!(writer, "Date,Payee,Memo,Amount"); // Checking all the other writeln cases
     let transactions = content.get(beginning..).unwrap();
     let mut complete = "".to_string();
     for line in transactions.lines().skip(1) {
@@ -106,7 +102,7 @@ fn format(content: String) {
         if !(complete.ends_with("\"S\"")) && !(complete.ends_with("\"H\"")) {
             continue;
         } else {
-            // Balance lines have very little details and are easy to spot
+            // Balance lines in the end have very little detail and are easy to spot
             if complete.contains(";;;;;;;;;") {
                 break;
             };
@@ -115,8 +111,7 @@ fn format(content: String) {
             let parts: Vec<&str> = complete.split(";")
                 .map(|x| x.trim_matches('\"'))
                 .collect();
-            // With half a year of transactions, this doesn't seem to speed anything noticeably
-            let result = writeln!(handle, "{},{},{},{}", convert_date(&parts),
+            let result = writeln!(writer, "{},{},{},{}", convert_date(&parts),
                                   convert_payee(&parts),
                                   convert_memo(&parts),
                                   convert_amount(&parts));
@@ -141,7 +136,7 @@ fn main() -> Result<(), ExitFailure> {
     let content = std::fs::read_to_string(&args.infile)
         .with_context(|_| format!("Could not read file '{}'", filename))?;
     
-    format(content);
+    format(content, &mut std::io::stdout());
 
     Ok(())
 }
