@@ -143,6 +143,40 @@ fn main() -> Result<(), ExitFailure> {
 
 
 #[test]
+fn test_format_minimal() {
+    let input = r#"
+"Bremische Volksbank eG"
+
+"Umsatzanzeige"
+
+"BLZ:";"29190024";;"Datum:";"24.06.2020"
+"Konto:";"123456700";;"Uhrzeit:";"23:21:46"
+"Abfrage von:";"Mila Mustermann";;"Kontoinhaber:";"Mila Mustermann"
+
+"Zeitraum:";;"von:";"27.05.2020";"bis:";
+"Betrag in EUR:";;"von:";" ";"bis:";" "
+"Sortiert nach:";"Buchungstag";"absteigend"
+
+"Buchungstag";"Valuta";"Auftraggeber/Zahlungsempfänger";"Empfänger/Zahlungspflichtiger";"Konto-Nr.";"IBAN";"BLZ";"BIC";"Vorgang/Verwendungszweck";"Kundenreferenz";"Währung";"Umsatz";" "
+"24.06.2020";"24.06.2020";"ISSUER";"ROSSMANN VIELEN DANK";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
+DIRK ROSSMANN GMBH/BREMEN/D
+E
+23.06.2020 um 14:02:16 Uhr
+65338653/441343/ECTL/
+29190024/123456700/1/1222
+REF 107842/260046";;"EUR";"10,90";"S"
+"27.05.2020";;;;;;;;;"Anfangssaldo";"EUR";"1.176,91";"H"
+"24.06.2020";;;;;;;;;"Endsaldo";"EUR";"2666,55";"H""#;
+    let expected = r#"Date,Payee,Memo,Amount
+23.06.2020,ROSSMANN VIELEN DANK,Basislastschrift DIRK ROSSMANN GMBH/BREMEN/D E 23.06.2020 um 14:02:16 Uhr 65338653/441343/ECTL/ 29190024/123456700/1/1222 REF 107842/260046,-10.90
+"#;
+    let mut result = Vec::new();
+    format(input.to_string(), &mut result);
+    let string_output = String::from_utf8(result).unwrap();
+    assert_eq!(expected, string_output);
+}
+
+#[test]
 fn test_convert_date_no_memo() {
     let input = vec!["28.06.2020",
         "28.06.2020",
