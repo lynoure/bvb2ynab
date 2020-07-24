@@ -1,6 +1,6 @@
 [package]
 name = "bvb2ynab"
-version = "0.1.0"
+version = "0.8.0"
 authors = ["Lynoure Braakman <lynoure@gmail.com>"]
 edition = "2018"
 
@@ -12,3 +12,7 @@ failure = "0.1.7"
 exitfailure = "0.5.1"
 regex = "1.3.9"
 lazy_static = "1.4.0"
+
+[dev-dependencies]
+assert_cmd = "1.0.1"
+predicates = "1.0.5"
