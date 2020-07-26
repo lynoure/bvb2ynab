@@ -9,7 +9,9 @@ use regex::Regex;
 
 
 #[derive(StructOpt)]
+#[structopt(about = "Convert a Bremische Volksbank CSV file to YNAB format in standard output")]
 struct ConversionCLI {
+    #[structopt(help = "A Bremische Volksbank CSV file in UTF-8 encoding")]
     #[structopt(parse(from_os_str))]
     infile: std::path::PathBuf,
 }
