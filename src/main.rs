@@ -9,9 +9,17 @@ use regex::Regex;
 
 
 #[derive(StructOpt)]
-#[structopt(about = "Convert a Bremische Volksbank CSV file to YNAB format in standard output")]
+/// Convert a Bremische Volksbank CSV file to YNAB format in standard output
+///
+/// Minimal conversion from BVB CSV format to YNAB CSV format and
+/// assumes that the input file is already in UTF-8, so the whole workflow
+/// would go something like this:
+///
+/// $ iconv -f iso-8859-15 -t utf-8 -o ~/out.csv ~/original.csv
+///
+/// $ bvb2ynab ~/out.csv >> final.csv
 struct ConversionCLI {
-    #[structopt(help = "A Bremische Volksbank CSV file in UTF-8 encoding")]
+    /// A Bremische Volksbank CSV file in UTF-8 encoding
     #[structopt(parse(from_os_str))]
     infile: std::path::PathBuf,
 }
