@@ -2,6 +2,12 @@
 name = "bvb2ynab"
 version = "0.8.0"
 authors = ["Lynoure Braakman <lynoure@gmail.com>"]
+description = "A tool for converting Bremische Volksbank CSV files to YNAB format"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/lynoure/bvb2ynab"
+keywords = ["cli", "budgeting", "banking"]
+categories = ["command-line-utilities"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
