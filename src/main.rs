@@ -3,6 +3,7 @@
 
 
 use structopt::StructOpt;
+use std::collections::HashMap;
 use failure::ResultExt;
 use exitfailure::ExitFailure;
 use regex::Regex;
@@ -24,7 +25,19 @@ struct ConversionCLI {
     infile: std::path::PathBuf,
 }
 
-//TODO Struct for transaction?
+/// Cleans the chattiness of the payee string for the big companies doing that
+/// Assumes commas have been already removed
+fn clean_payee(payee: String) -> String {
+    let payees: HashMap<&str, &str> = [
+            ("DM DROGERIEMARKT SAGT DANKE", "DM"),
+            ("DANKE IHR LIDL", "Lidl"),
+            ("ROSSMANN VIELEN DANK", "Rossmann")
+            ].iter().cloned().collect();
+    match payees.get::<str>(&payee) {
+        Some(cleaned) => cleaned.to_string(),
+        None => payee
+    }
+}
 
 /// Converts the transaction date into a format that YNAB understands.
 /// As for card payments the actual date is often in the Vorgang/Verwendungszweck,
@@ -76,7 +89,7 @@ fn convert_payee(input: &Vec<&str>) -> String {
     if payee.contains("PayPal") {
         get_paypal_payee(input[8].replace(',', ""))
     } else {
-        payee
+        clean_payee(payee)
     }
 }
 
@@ -168,7 +181,7 @@ fn test_format_minimal() {
 "Sortiert nach:";"Buchungstag";"absteigend"
 
 "Buchungstag";"Valuta";"Auftraggeber/Zahlungsempfänger";"Empfänger/Zahlungspflichtiger";"Konto-Nr.";"IBAN";"BLZ";"BIC";"Vorgang/Verwendungszweck";"Kundenreferenz";"Währung";"Umsatz";" "
-"24.06.2020";"24.06.2020";"ISSUER";"ROSSMANN VIELEN DANK";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
+"24.06.2020";"24.06.2020";"ISSUER";"ROSSMANN";;"DE89370400440532013000";;"GENODEF1HB1";"Basislastschrift
 DIRK ROSSMANN GMBH/BREMEN/D
 E
 23.06.2020 um 14:02:16 Uhr
@@ -178,13 +191,20 @@ REF 107842/260046";;"EUR";"10,90";"S"
 "27.05.2020";;;;;;;;;"Anfangssaldo";"EUR";"1.176,91";"H"
 "24.06.2020";;;;;;;;;"Endsaldo";"EUR";"2666,55";"H""#;
     let expected = r#"Date,Payee,Memo,Amount
-23.06.2020,ROSSMANN VIELEN DANK,Basislastschrift DIRK ROSSMANN GMBH/BREMEN/D E 23.06.2020 um 14:02:16 Uhr 65338653/441343/ECTL/ 29190024/123456700/1/1222 REF 107842/260046,-10.90
+23.06.2020,ROSSMANN,Basislastschrift DIRK ROSSMANN GMBH/BREMEN/D E 23.06.2020 um 14:02:16 Uhr 65338653/441343/ECTL/ 29190024/123456700/1/1222 REF 107842/260046,-10.90
 "#;
     let mut result = Vec::new();
     format(input.to_string(), &mut result);
     let string_output = String::from_utf8(result).unwrap();
     assert_eq!(expected, string_output);
 }
+
+#[test]
+fn test_clean_payee_dm() {
+    let input = "DM DROGERIEMARKT SAGT DANKE".to_string();
+    assert_eq!("DM", clean_payee(input));
+}
+
 
 #[test]
 fn test_convert_date_no_memo() {
@@ -232,12 +252,18 @@ fn test_convert_payee_removes_commas() {
         "DANKE, IHR SUPERMARKT"];
     // Will joyfully break if the chatty formats ever get cleaned real good
     assert_eq!("DANKE IHR SUPERMARKT", convert_payee(&input));
-
-    // TODO prettified use of case
-    // assert_eq!("Tolle Laden GmbH", convert_payee("\"TOLLE LADEN GMBH\""));
-    // TODO for pruning the chattiness from the most usual suspects
-    // assert_eq("Lidl", convert_payee("\"DANKE, IHR LIDL\""));
 }
+
+#[test]
+fn test_convert_payee_clean_lidl() {
+    // TODO: Learn more about testing in Rust to detangle this from implementation details
+    let input = vec!["28.6.2020",
+        "28.6.2020",
+        "ISSUER",
+        "DANKE, IHR LIDL"];
+    assert_eq!("Lidl", convert_payee(&input));
+}
+
 
 #[test]
 fn test_get_paypal_payee() {
